@@ -11,8 +11,9 @@ concurrency:
   group: "deploy-${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}"
   
 permissions:
-  contents: read
+  contents: write
   id-token: write
+  pull-requests: write
 
 env:
   CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
