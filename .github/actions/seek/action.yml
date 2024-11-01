@@ -21,6 +21,7 @@ runs:
     - name: check diff
       shell: bash
       run: |
+        cd ${{ inputs.path }}
         cdk diff --all > diff.txt
         cat diff.txt
         if [ -s diff.txt ]; then
