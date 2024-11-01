@@ -18,3 +18,14 @@ runs:
       shell: bash
     - run: make seek --directory ${{ inputs.path }}
       shell: bash
+    - name: check diff
+      shell: bash
+      run: |
+        cdk diff --all > diff.txt
+        cat diff.txt
+        if [ -s diff.txt ]; then
+          gh pr comment ${{ github.event.number }} --body $(cat diff.txt)
+          exit 0
+        else
+          echo "No CDK Diff found"
+        fi

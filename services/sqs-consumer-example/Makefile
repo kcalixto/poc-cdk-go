@@ -22,4 +22,3 @@ seek: clean build
 	go test -v ./...
 	cdk synth --all
 	cdk doctor
-	cdk diff --all
