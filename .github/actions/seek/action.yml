@@ -25,7 +25,7 @@ runs:
         cdk diff --all > diff.txt
         cat diff.txt
         if [ -s diff.txt ]; then
-          gh pr comment ${{ github.event.number }} --body $(cat diff.txt)
+          gh pr comment ${{ github.event.number }} --body "$(cat diff.txt)"
           exit 0
         else
           echo "No CDK Diff found"
