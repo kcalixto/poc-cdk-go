@@ -55,4 +55,5 @@ jobs:
       - run: go test -v ./...
       - name: cdk deploy
         run: |
+            cdk bootstrap
             cdk deploy --all --ci --require-approval never --trace
