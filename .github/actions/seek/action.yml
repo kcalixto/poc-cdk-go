@@ -20,6 +20,8 @@ runs:
       shell: bash
     - name: check diff
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         cd ${{ inputs.path }}
         cdk diff --all > diff.txt
