@@ -21,32 +21,20 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
-  Check:
-    name: Check
+  Seek:
+    name: Seek
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: ./.github/actions/seek
         with:
-          go-version: 1.23.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-      - run: npm install -g aws-cdk
-      - run: make seek
+          path: services/sqs-consumer-example
 
   Deploy:
     name: Deploy cdk
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: ./.github/actions/deploy
         with:
-          go-version: 1.23.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-      - run: npm install -g aws-cdk
-      - run: make deploy
+          path: services/sqs-consumer-example

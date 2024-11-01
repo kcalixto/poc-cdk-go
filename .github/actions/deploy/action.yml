@@ -1,0 +1,23 @@
+name: Deploy
+description: Deploy using cdk
+inputs:
+  path:
+    description: Path to Service
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 1.23.0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - run: cd ${{ inputs.path }}
+      shell: bash
+    - run: npm install -g aws-cdk
+      shell: bash
+    - run: make deploy
+      shell: bash
