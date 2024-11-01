@@ -34,10 +34,7 @@ jobs:
         with:
           node-version: 20.x
       - run: npm install -g aws-cdk
-      - run: go test -v ./...
-      - run: cdk synth --all
-      - run: cdk doctor
-      - run: cdk diff --all
+      - run: make seek
 
   Deploy:
     name: Deploy cdk
@@ -52,8 +49,4 @@ jobs:
         with:
           node-version: 20.x
       - run: npm install -g aws-cdk
-      - run: go test -v ./...
-      - name: cdk deploy
-        run: |
-            cdk bootstrap
-            cdk deploy --all --ci --require-approval never --trace
+      - run: make deploy
