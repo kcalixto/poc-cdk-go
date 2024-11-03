@@ -1,0 +1,32 @@
+name: Seek
+description: Seek using cdk
+inputs:
+  path:
+    description: Path to Service
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 1.23.0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - run: npm install -g aws-cdk
+      shell: bash
+    - run: make seek --directory ${{ inputs.path }}
+      shell: bash
+    - name: check diff
+      shell: bash
+      run: |
+        cd ${{ inputs.path }}
+        cdk diff --all > diff.txt
+        cat diff.txt
+        if [ -s diff.txt ]; then
+          gh pr comment ${{ github.event.number }} --body "$(printf '```\n%s\n```' "$(cat diff.txt)")"
+          exit 0
+        else
+          echo "No CDK Diff found"
+        fi
