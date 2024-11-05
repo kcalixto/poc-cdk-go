@@ -1,6 +1,8 @@
+include ../../scripts/go.mk
+
 build:
-	go_build --path api/handler --zip handler
-	go_build --path api/handler-dlq --zip handler-dlq
+	$(call build_go_binary,api/handler,handler)
+	$(call build_go_binary,api/handler-dlq,handler-dlq)
 
 clean:
 	rm -rf ./bin

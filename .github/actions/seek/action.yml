@@ -16,13 +16,6 @@ runs:
         node-version: 20.x
     - run: npm install -g aws-cdk
       shell: bash
-    - name: Install go_build command
-      shell: bash
-      run: |
-        sudo cp ./.github/scripts/go_build.sh /usr/local/bin/go_build
-        sudo chmod +x /usr/local/bin/go_build
-    - run: which go_build
-      shell: bash
     - run: make seek --directory ${{ inputs.path }}
       shell: bash
     - name: check diff
