@@ -18,6 +18,6 @@ runs:
       shell: bash
     - name: Ensure go_build.sh is executable
       shell: bash
-      run: chmod +x ./.github/scripts/go_build.sh
+      run: chmod +x ./.github/scripts/go_build.sh && source ./.github/scripts/go_build.sh
     - run: make deploy --directory ${{ inputs.path }}
       shell: bash
