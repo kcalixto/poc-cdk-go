@@ -16,9 +16,13 @@ runs:
         node-version: 20.x
     - run: npm install -g aws-cdk
       shell: bash
-    - name: Ensure go_build.sh is executable
+    - name: Install go_build command
       shell: bash
-      run: chmod +x ./.github/scripts/go_build.sh && source ./.github/scripts/go_build.sh
+      run: |
+        mkdir -p ~/bin
+        cp ./.github/scripts/go_build.sh ~/bin/go_build
+        chmod +x ~/bin/go_build
+        echo "~/bin" >> $GITHUB_PATH
     - run: make seek --directory ${{ inputs.path }}
       shell: bash
     - name: check diff

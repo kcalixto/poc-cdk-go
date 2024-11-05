@@ -1,4 +1,5 @@
 #!/bin/bash
+
 go_build() {
     # Initialize variables
     path=""
