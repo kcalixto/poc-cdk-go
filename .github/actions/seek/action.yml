@@ -16,6 +16,8 @@ runs:
         node-version: 20.x
     - run: npm install -g aws-cdk
       shell: bash
+    - run: uname
+      shell: bash
     - run: make seek --directory ${{ inputs.path }}
       shell: bash
     - name: check diff
