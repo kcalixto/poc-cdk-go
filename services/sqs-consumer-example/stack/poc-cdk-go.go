@@ -17,7 +17,7 @@ type PocCdkGoStackProps struct {
 }
 
 func bin(assetName string) *string {
-	return jsii.String(fmt.Sprintf("bin/%s", assetName))
+	return jsii.String(fmt.Sprintf("../bin/%s", assetName))
 }
 
 func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStackProps) awscdk.Stack {
@@ -45,7 +45,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 		Handler: jsii.String("bootstrap"),
 		Code: awslambda.Code_FromAsset(
-			bin("api/handler.zip"),
+			bin("handler.zip"),
 			nil,
 		),
 	})
@@ -54,7 +54,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 		Handler: jsii.String("bootstrap"),
 		Code: awslambda.Code_FromAsset(
-			bin("api/handler-dlq.zip"),
+			bin("handler-dlq.zip"),
 			nil,
 		),
 	})

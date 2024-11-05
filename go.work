@@ -1,5 +1,6 @@
 go 1.23.0
 
 use (
+	./cli
 	./services/sqs-consumer-example
 )

@@ -1,24 +1,25 @@
+include ../../scripts/go.mk
+
 build:
-	export GO111MODULE=on
-	export CGO_ENABLED=1
+	$(call build_go,api/handler,handler.zip)
+	$(call build_go,api/handler-dlq,handler-dlq.zip)
 
-	env GOARCH=arm64 GOOS=linux go build -ldflags="-s -w" -o bin/api/bootstrap api/handler/main.go
-	chmod +x bin/api/bootstrap
-	zip -j bin/api/handler.zip bin/api/bootstrap
-
-	env GOARCH=arm64 GOOS=linux go build -ldflags="-s -w" -o bin/api-dlq/bootstrap api/handler-dlq/main.go
-	chmod +x bin/api-dlq/bootstrap
-	zip -j bin/api/handler-dlq.zip bin/api-dlq/bootstrap
-	
 clean:
 	rm -rf ./bin
 
-deploy: clean build
-	go test -v ./...
-	cdk bootstrap
-	cdk deploy --all --ci --require-approval never --trace
+test:
+	gotestsum --format pkgname -- -coverprofile=coverage.out ./...
 
-seek: clean build
-	go test -v ./...
-	cdk synth --all
-	cdk doctor
+deploy: clean build test
+	cd stack; \
+	cdk bootstrap; \
+	cdk deploy --all --ci --require-approval never --trace;
+
+seek: clean build test
+	cd stack; \
+	cdk synth --all; \
+	cdk doctor;
+
+diff:
+	cd stack; \
+	cdk diff --all;

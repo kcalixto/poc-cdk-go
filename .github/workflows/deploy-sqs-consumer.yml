@@ -1,4 +1,4 @@
-name: "Deploy"
+name: "sqs consumer"
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     branches: ["main"]
     
 concurrency:
-  group: "deploy-${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}"
+  group: "${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}"
   
 permissions:
   contents: write
@@ -29,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/seek
+      - name: 🔎 Analyze pull request
+        uses: ./.github/actions/seek
         with:
           path: services/sqs-consumer-example
 
@@ -39,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/deploy
+      - name: 🚀 Deploy
+        uses: ./.github/actions/deploy
         with:
           path: services/sqs-consumer-example
