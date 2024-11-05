@@ -19,10 +19,10 @@ runs:
     - name: Install go_build command
       shell: bash
       run: |
-        mkdir -p ~/bin
-        cp ./.github/scripts/go_build.sh ~/bin/go_build
-        chmod +x ~/bin/go_build
-        echo "~/bin" >> $GITHUB_PATH
+        sudo cp ./.github/scripts/go_build.sh /usr/local/bin/go_build
+        sudo chmod +x /usr/local/bin/go_build
+    - run: which go_build
+      shell: bash
     - run: make seek --directory ${{ inputs.path }}
       shell: bash
     - name: check diff
