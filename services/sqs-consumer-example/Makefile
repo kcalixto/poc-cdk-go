@@ -8,7 +8,7 @@ clean:
 	rm -rf ./bin
 
 test:
-	go test -v ./...
+	gotestsum --format pkgname -- -coverprofile=coverage.out ./...
 
 deploy: clean build test
 	cd stack; \
