@@ -12,6 +12,10 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
+const (
+	STACK_NAME = "poc-cdk-go"
+)
+
 type PocCdkGoStackProps struct {
 	awscdk.StackProps
 }
@@ -27,11 +31,10 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	queueName := "cdk-go-sample-queue"
+	queueName := "poc-cdk-go-sample-queue"
 	eventsDLQueue := awssqs.NewQueue(stack, jsii.String(fmt.Sprintf("%s-dlq", queueName)), &awssqs.QueueProps{
 		QueueName: jsii.String(fmt.Sprintf("%s-dlq", queueName)),
 	})
-
 	eventsQueue := awssqs.NewQueue(stack, jsii.String(queueName), &awssqs.QueueProps{
 		QueueName:         jsii.String(queueName),
 		VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
@@ -41,18 +44,22 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		},
 	})
 
-	sqsConsumer := awslambda.NewFunction(stack, jsii.String("cdk-go-sample-function"), &awslambda.FunctionProps{
-		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
-		Handler: jsii.String("bootstrap"),
+	sqsConsumerFunctionName := jsii.String("poc-cdk-sqs-consumer-function")
+	sqsConsumer := awslambda.NewFunction(stack, sqsConsumerFunctionName, &awslambda.FunctionProps{
+		FunctionName: sqsConsumerFunctionName,
+		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Handler:      jsii.String("bootstrap"),
 		Code: awslambda.Code_FromAsset(
 			bin("handler.zip"),
 			nil,
 		),
 	})
 
-	sqsConsumerDLQ := awslambda.NewFunction(stack, jsii.String("cdk-go-sample-function-dlq"), &awslambda.FunctionProps{
-		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
-		Handler: jsii.String("bootstrap"),
+	sqsConsumerDLQFunctionName := jsii.String("poc-cdk-go-sqs-consumer-dlq")
+	sqsConsumerDLQ := awslambda.NewFunction(stack, sqsConsumerDLQFunctionName, &awslambda.FunctionProps{
+		FunctionName: sqsConsumerDLQFunctionName,
+		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Handler:      jsii.String("bootstrap"),
 		Code: awslambda.Code_FromAsset(
 			bin("handler-dlq.zip"),
 			nil,
@@ -78,7 +85,7 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	NewPocCdkGoStack(app, "go-cdk-sample-cloudformation", &PocCdkGoStackProps{
+	NewPocCdkGoStack(app, STACK_NAME, &PocCdkGoStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},
