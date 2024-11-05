@@ -1,5 +1,6 @@
 build:
 	go_build --path api/handler --zip handler
+	go_build --path api/handler-dlq --zip handler-dlq
 
 clean:
 	rm -rf ./bin
