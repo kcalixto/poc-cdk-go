@@ -1,8 +1,8 @@
 include ../../scripts/go.mk
 
 build:
-	$(call build_go,api/handler,handler)
-	$(call build_go,api/handler-dlq,handler-dlq)
+	$(call build_go,api/handler,handler.zip)
+	$(call build_go,api/handler-dlq,handler-dlq.zip)
 
 clean:
 	rm -rf ./bin
@@ -19,3 +19,7 @@ seek: clean build test
 	cd stack; \
 	cdk synth --all; \
 	cdk doctor;
+
+diff:
+	cd stack; \
+	cdk diff --all;

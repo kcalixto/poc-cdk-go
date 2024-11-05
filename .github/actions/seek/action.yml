@@ -1,38 +1,43 @@
 name: Seek
-description: execute 'make seek' command and check for CDK diff
+description: Execute 'make seek' and 'make diff' commands
 inputs:
   path:
     description: Path to Service
     required: true
-  cdkStackPath:
-    description: Path to CDK Stack
-    required: false
-    default: "stack"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5
+    - name: ⚙︎ Setup Go
+      uses: actions/setup-go@v5
       with:
         go-version: 1.23.0
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-    - run: npm install -g aws-cdk
-      shell: bash
-    - run: uname
-      shell: bash
-    - run: make seek --directory ${{ inputs.path }}
-      shell: bash
-    - name: check diff
+
+    - name: ⬇️ Install gotestsum
       shell: bash
       run: |
-        cd ${{ inputs.path }}/${{ inputs.cdkStackPath }}
-        cdk diff --all > diff.txt
-        cat diff.txt
+        go install gotest.tools/gotestsum@v1.12.0
+
+    - name: ⚙︎ Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+
+    - name: ⬇️ Install AWS CDK
+      run: npm install -g aws-cdk
+      shell: bash
+
+    - name: 🔎 Seek
+      run: make seek --directory ${{ inputs.path }}
+      shell: bash
+
+    - name: 🧬 Diff
+      shell: bash
+      run: |
+        make diff --directory ${{ inputs.path }} > diff.txt
         if [ -s diff.txt ]; then
           gh pr comment ${{ github.event.number }} --body "$(printf '```\n%s\n```' "$(cat diff.txt)")"
           exit 0
         else
-          echo "No CDK Diff found"
+          echo "❌ No CDK Diff found"
         fi

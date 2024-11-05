@@ -8,16 +8,25 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5
+    - name: ⚙︎ Setup Go
+      uses: actions/setup-go@v5
       with:
         go-version: 1.23.0
-    - uses: actions/setup-node@v4
+
+    - name: ⬇️ Install gotestsum
+      shell: bash
+      run: |
+        go install gotest.tools/gotestsum@v1.12.0
+
+    - name: ⚙︎ Setup Node
+      uses: actions/setup-node@v4
       with:
         node-version: 20.x
-    - run: npm install -g aws-cdk
+
+    - name: ⬇️ Install AWS CDK
+      run: npm install -g aws-cdk
       shell: bash
-    - name: Ensure go_build.sh is executable
-      shell: bash
-      run: chmod +x ./.github/scripts/go_build.sh && source ./.github/scripts/go_build.sh
-    - run: make deploy --directory ${{ inputs.path }}
+
+    - name: 🚀 Execute Deploy
+      run: make deploy --directory ${{ inputs.path }}
       shell: bash
