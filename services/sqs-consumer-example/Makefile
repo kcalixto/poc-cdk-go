@@ -15,10 +15,12 @@ clean:
 
 deploy: clean build
 	go test -v ./...
-	cdk bootstrap
-	cdk deploy --all --ci --require-approval never --trace
+	cd stack; \
+	cdk bootstrap; \
+	cdk deploy --all --ci --require-approval never --trace;
 
 seek: clean build
 	go test -v ./...
-	cdk synth --all
-	cdk doctor
+	cd stack; \
+	cdk synth --all; \
+	cdk doctor;

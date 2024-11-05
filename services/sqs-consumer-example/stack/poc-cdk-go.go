@@ -17,7 +17,7 @@ type PocCdkGoStackProps struct {
 }
 
 func bin(assetName string) *string {
-	return jsii.String(fmt.Sprintf("bin/%s", assetName))
+	return jsii.String(fmt.Sprintf("../bin/%s", assetName))
 }
 
 func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStackProps) awscdk.Stack {
