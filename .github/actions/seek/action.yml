@@ -4,6 +4,10 @@ inputs:
   path:
     description: Path to Service
     required: true
+  cdkStackPath:
+    description: Path to CDK Stack
+    required: false
+    default: "stack"
 
 runs:
   using: "composite"
@@ -23,7 +27,7 @@ runs:
     - name: check diff
       shell: bash
       run: |
-        cd ${{ inputs.path }}
+        cd ${{ inputs.path }}/${{ inputs.cdkStackPath }}
         cdk diff --all > diff.txt
         cat diff.txt
         if [ -s diff.txt ]; then
