@@ -8,12 +8,12 @@ clean:
 test:
 	go test -v ./...
 
-deploy: test clean build
+deploy: clean build test
 	cd stack; \
 	cdk bootstrap; \
 	cdk deploy --all --ci --require-approval never --trace;
 
-seek: test clean build
+seek: clean build test
 	cd stack; \
 	cdk synth --all; \
 	cdk doctor;
