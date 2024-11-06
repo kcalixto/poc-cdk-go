@@ -119,7 +119,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		&awsapigateway.ResourceOptions{},
 	)
 	produceResource.AddMethod(
-		jsii.String(http.MethodGet),
+		jsii.String(http.MethodPost),
 		awsapigateway.NewLambdaIntegration(
 			sqsProducerFunction,
 			&awsapigateway.LambdaIntegrationOptions{},
