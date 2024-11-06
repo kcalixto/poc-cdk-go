@@ -142,6 +142,9 @@ func main() {
 }
 
 func env() *awscdk.Environment {
+	if ENV == "" {
+		panic("ENV is required")
+	}
 	return &awscdk.Environment{
 		Account: jsii.String(os.Getenv("CDK_ACCOUNT_ID")),
 		Region:  jsii.String("sa-east-1"),
