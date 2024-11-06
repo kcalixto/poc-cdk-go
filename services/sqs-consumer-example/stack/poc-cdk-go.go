@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	// "github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
@@ -12,16 +15,19 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-const (
+var (
 	STACK_NAME = "poc-cdk-go"
+	ENV        = os.Getenv("ENV")
+	name       = func(s string) *string {
+		return jsii.Sprintf("%s-%s-%s", STACK_NAME, ENV, s)
+	}
+	bin = func(assetName string) *string {
+		return jsii.Sprintf("../bin/%s", assetName)
+	}
 )
 
 type PocCdkGoStackProps struct {
 	awscdk.StackProps
-}
-
-func bin(assetName string) *string {
-	return jsii.String(fmt.Sprintf("../bin/%s", assetName))
 }
 
 func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStackProps) awscdk.Stack {
@@ -44,37 +50,78 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		},
 	})
 
-	sqsConsumerFunctionName := jsii.String("poc-cdk-sqs-consumer-function")
-	sqsConsumer := awslambda.NewFunction(stack, sqsConsumerFunctionName, &awslambda.FunctionProps{
+	sqsConsumerFunctionName := name("consumer-function")
+	sqsConsumerFunction := awslambda.NewFunction(stack, sqsConsumerFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsConsumerFunctionName,
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+		MemorySize:   jsii.Number(256),
 		Code: awslambda.Code_FromAsset(
 			bin("handler.zip"),
 			nil,
 		),
 	})
 
-	sqsConsumerDLQFunctionName := jsii.String("poc-cdk-go-sqs-consumer-dlq")
-	sqsConsumerDLQ := awslambda.NewFunction(stack, sqsConsumerDLQFunctionName, &awslambda.FunctionProps{
+	sqsConsumerDLQFunctionName := name("consumer-dlq")
+	sqsConsumerDLQFunction := awslambda.NewFunction(stack, sqsConsumerDLQFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsConsumerDLQFunctionName,
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+		MemorySize:   jsii.Number(256),
 		Code: awslambda.Code_FromAsset(
 			bin("handler-dlq.zip"),
 			nil,
 		),
 	})
 
-	sqsConsumer.AddEventSource(
+	sqsConsumerFunction.AddEventSource(
 		awslambdaeventsources.NewSqsEventSource(eventsQueue, &awslambdaeventsources.SqsEventSourceProps{
 			BatchSize: jsii.Number(5),
 		}),
 	)
-	sqsConsumerDLQ.AddEventSource(
+	sqsConsumerDLQFunction.AddEventSource(
 		awslambdaeventsources.NewSqsEventSource(eventsDLQueue, &awslambdaeventsources.SqsEventSourceProps{
 			BatchSize: jsii.Number(5),
 		}),
+	)
+
+	sqsProducerFunctionName := name("producer-function")
+	sqsProducerFunction := awslambda.NewFunction(stack, sqsProducerFunctionName, &awslambda.FunctionProps{
+		FunctionName: sqsProducerFunctionName,
+		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Handler:      jsii.String("bootstrap"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+		MemorySize:   jsii.Number(256),
+		Code: awslambda.Code_FromAsset(
+			bin("producer.zip"),
+			nil,
+		),
+	})
+
+	// producerPrincipal := awsiam.NewServicePrincipal(jsii.String("apigateway.amazonaws.com"), &awsiam.ServicePrincipalOpts{})
+	// sqsProducerFunction.GrantInvoke(producerPrincipal)
+
+	apiName := name("producer-api")
+	api := awsapigateway.NewLambdaRestApi(stack, apiName, &awsapigateway.LambdaRestApiProps{
+		RestApiName: apiName,
+		Handler:     sqsProducerFunction,
+		Proxy:       jsii.Bool(false),
+	})
+
+	// Add a '/produce' resource with a GET method
+	produceResource := api.Root().AddResource(
+		jsii.String("produce"),
+		&awsapigateway.ResourceOptions{},
+	)
+	produceResource.AddMethod(
+		jsii.String(http.MethodGet),
+		awsapigateway.NewLambdaIntegration(
+			sqsProducerFunction,
+			&awsapigateway.LambdaIntegrationOptions{},
+		),
+		&awsapigateway.MethodOptions{},
 	)
 
 	return stack

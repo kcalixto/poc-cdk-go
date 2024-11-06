@@ -3,6 +3,7 @@ include ../../scripts/go.mk
 build:
 	$(call build_go,api/handler,handler.zip)
 	$(call build_go,api/handler-dlq,handler-dlq.zip)
+	$(call build_go,api/producer,producer.zip)
 
 clean:
 	rm -rf ./bin
