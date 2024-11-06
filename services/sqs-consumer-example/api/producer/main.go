@@ -36,6 +36,8 @@ func Handler(ctx context.Context, event events.APIGatewayProxyRequest) (res even
 		return events.APIGatewayProxyResponse{StatusCode: 400}, nil
 	}
 
+	fmt.Sprintf("Sending message: %s to queue: %s", req.Message, req.QueueUrl)
+
 	// Send the message
 	input := &sqs.SendMessageInput{
 		MessageBody: aws.String(req.Message),
