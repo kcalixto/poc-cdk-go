@@ -54,6 +54,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 	sqsConsumerFunction := awslambda.NewFunction(stack, sqsConsumerFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsConsumerFunctionName,
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Architecture: awslambda.Architecture_ARM_64(),
 		Handler:      jsii.String("bootstrap"),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		MemorySize:   jsii.Number(256),
@@ -67,6 +68,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 	sqsConsumerDLQFunction := awslambda.NewFunction(stack, sqsConsumerDLQFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsConsumerDLQFunctionName,
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Architecture: awslambda.Architecture_ARM_64(),
 		Handler:      jsii.String("bootstrap"),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		MemorySize:   jsii.Number(256),
@@ -91,6 +93,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 	sqsProducerFunction := awslambda.NewFunction(stack, sqsProducerFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsProducerFunctionName,
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Architecture: awslambda.Architecture_ARM_64(),
 		Handler:      jsii.String("bootstrap"),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		MemorySize:   jsii.Number(256),
