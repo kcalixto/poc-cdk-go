@@ -114,10 +114,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 	})
 
 	// Add a '/produce' resource with a GET method
-	produceResource := api.Root().AddResource(
-		jsii.String("produce"),
-		&awsapigateway.ResourceOptions{},
-	)
+	produceResource := api.Root().ResourceForPath(jsii.String("/produce/message"))
 	produceResource.AddMethod(
 		jsii.String(http.MethodPost),
 		awsapigateway.NewLambdaIntegration(
