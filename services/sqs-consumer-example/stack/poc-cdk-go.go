@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
@@ -123,12 +124,39 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 			"TEST": getSSM("/poc-cdk-go/test"),
 		},
 	})
+	// newLambdaRole := func(scope constructs.Construct, id string) awsiam.Role {
+	// 	// Create a new IAM role for the Lambda function
+	// 	role := awsiam.NewRole(scope, jsii.String(id), &awsiam.RoleProps{
+	// 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), nil),
+	// 	})
+	//
+	// 	// Attach a policy to the role
+	// 	role.AddToPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+	// 		Actions:   jsii.Strings("lambda:InvokeFunction"),
+	// 		Resources: jsii.Strings("*"),
+	// 	}))
+	//
+	// 	return role
+	// }
+	// // lambda permissions
+	// producerRole := newLambdaRole(stack, "ProducerLambdaRole")
+	sqsProducerFunction.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("lambda:InvokeFunction"),
+		Resources: jsii.Strings("*"),
+	}))
 
+	// api
 	apiName := name("producer-api")
-	api := awsapigateway.NewLambdaRestApi(stack, apiName, &awsapigateway.LambdaRestApiProps{
+	api := awsapigateway.NewRestApi(stack, apiName, &awsapigateway.RestApiProps{
 		RestApiName: apiName,
-		Handler:     sqsProducerFunction,
-		Proxy:       jsii.Bool(false),
+		// DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
+		// 	AllowOrigins: jsii.PtrSlice("*"),
+		// 	AllowMethods: jsii.PtrSlice(http.MethodGet, http.MethodPost),
+		// 	AllowHeaders: jsii.PtrSlice("*"),
+		// },
+		DeployOptions: &awsapigateway.StageOptions{
+			StageName: jsii.String(ENV),
+		},
 	})
 
 	// Add a '/produce' resource with a GET method
@@ -137,7 +165,39 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		jsii.String(http.MethodPost),
 		awsapigateway.NewLambdaIntegration(
 			sqsProducerFunction,
-			&awsapigateway.LambdaIntegrationOptions{},
+			&awsapigateway.LambdaIntegrationOptions{
+				AllowTestInvoke: jsii.Bool(false),
+			},
+		),
+		&awsapigateway.MethodOptions{},
+	)
+
+	// anther lambda
+	sqsProducer2FunctionName := name("producer-2-function")
+	sqsProducer2Function := awslambda.NewFunction(stack, sqsProducer2FunctionName, &awslambda.FunctionProps{
+		FunctionName: sqsProducer2FunctionName,
+		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Architecture: awslambda.Architecture_ARM_64(),
+		Handler:      jsii.String("bootstrap"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+		MemorySize:   jsii.Number(256),
+		Code: awslambda.Code_FromAsset(
+			bin("producer.zip"),
+			nil,
+		),
+		Environment: &map[string]*string{
+			"TEST": getSSM("/poc-cdk-go/test"),
+		},
+	})
+
+	producer2Resource := api.Root().ResourceForPath(jsii.String("/produce/message2"))
+	producer2Resource.AddMethod(
+		jsii.String(http.MethodPost),
+		awsapigateway.NewLambdaIntegration(
+			sqsProducer2Function,
+			&awsapigateway.LambdaIntegrationOptions{
+				AllowTestInvoke: jsii.Bool(false),
+			},
 		),
 		&awsapigateway.MethodOptions{},
 	)
