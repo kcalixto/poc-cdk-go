@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
-	// "github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -89,6 +94,20 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		}),
 	)
 
+	dirName, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	lambdaZipS3Asset := awss3assets.NewAsset(stack, jsii.String("ProducerZippedDirAsset"), &awss3assets.AssetProps{
+		Path: jsii.String(filepath.Join(dirName, "../bin/producer.zip")),
+	})
+
+	// new cloudfromation output
+	awscdk.NewCfnOutput(stack, jsii.String("ProducerZippedDirAssetS3Bucket"), &awscdk.CfnOutputProps{
+		Value: lambdaZipS3Asset.S3ObjectUrl(),
+	})
+
 	sqsProducerFunctionName := name("producer-function")
 	sqsProducerFunction := awslambda.NewFunction(stack, sqsProducerFunctionName, &awslambda.FunctionProps{
 		FunctionName: sqsProducerFunctionName,
@@ -101,16 +120,43 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 			bin("producer.zip"),
 			nil,
 		),
+		Environment: &map[string]*string{
+			"TEST": getSSM("/poc-cdk-go/test"),
+		},
 	})
+	// newLambdaRole := func(scope constructs.Construct, id string) awsiam.Role {
+	// 	// Create a new IAM role for the Lambda function
+	// 	role := awsiam.NewRole(scope, jsii.String(id), &awsiam.RoleProps{
+	// 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), nil),
+	// 	})
+	//
+	// 	// Attach a policy to the role
+	// 	role.AddToPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+	// 		Actions:   jsii.Strings("lambda:InvokeFunction"),
+	// 		Resources: jsii.Strings("*"),
+	// 	}))
+	//
+	// 	return role
+	// }
+	// // lambda permissions
+	// producerRole := newLambdaRole(stack, "ProducerLambdaRole")
+	sqsProducerFunction.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("lambda:InvokeFunction"),
+		Resources: jsii.Strings("*"),
+	}))
 
-	// producerPrincipal := awsiam.NewServicePrincipal(jsii.String("apigateway.amazonaws.com"), &awsiam.ServicePrincipalOpts{})
-	// sqsProducerFunction.GrantInvoke(producerPrincipal)
-
+	// api
 	apiName := name("producer-api")
-	api := awsapigateway.NewLambdaRestApi(stack, apiName, &awsapigateway.LambdaRestApiProps{
+	api := awsapigateway.NewRestApi(stack, apiName, &awsapigateway.RestApiProps{
 		RestApiName: apiName,
-		Handler:     sqsProducerFunction,
-		Proxy:       jsii.Bool(false),
+		// DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
+		// 	AllowOrigins: jsii.PtrSlice("*"),
+		// 	AllowMethods: jsii.PtrSlice(http.MethodGet, http.MethodPost),
+		// 	AllowHeaders: jsii.PtrSlice("*"),
+		// },
+		DeployOptions: &awsapigateway.StageOptions{
+			StageName: jsii.String(ENV),
+		},
 	})
 
 	// Add a '/produce' resource with a GET method
@@ -119,12 +165,32 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		jsii.String(http.MethodPost),
 		awsapigateway.NewLambdaIntegration(
 			sqsProducerFunction,
-			&awsapigateway.LambdaIntegrationOptions{},
+			&awsapigateway.LambdaIntegrationOptions{
+				AllowTestInvoke: jsii.Bool(false),
+			},
 		),
 		&awsapigateway.MethodOptions{},
 	)
 
 	return stack
+}
+
+func getSSM(key string) *string {
+	awsconfig, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("sa-east-1"))
+	if err != nil {
+		panic(err)
+	}
+	ssmClient := ssm.NewFromConfig(awsconfig)
+
+	param, err := ssmClient.GetParameter(context.TODO(), &ssm.GetParameterInput{
+		Name:           jsii.String(key),
+		WithDecryption: jsii.Bool(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return param.Parameter.Value
 }
 
 func main() {
@@ -146,7 +212,7 @@ func env() *awscdk.Environment {
 		panic("ENV is required")
 	}
 	return &awscdk.Environment{
-		Account: jsii.String(os.Getenv("CDK_ACCOUNT_ID")),
-		Region:  jsii.String("sa-east-1"),
+		Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
+		Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
 	}
 }

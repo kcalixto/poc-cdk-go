@@ -19,3 +19,6 @@
 cdk.out
 
 bin
+
+**/stack/output.txt
+**/stack/resources_output.txt
