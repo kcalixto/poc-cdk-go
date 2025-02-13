@@ -34,9 +34,9 @@ runs:
     - name: 🧬 Diff
       shell: bash
       run: |
-        cd ${{ inputs.path }} \
-        cdk diff --no-change-set --quiet --no-color > output.txt 2>&1 \
-        awk '/Resources/{flag=1; print; next} /Number of stacks/{flag=0} flag' output.txt > resources_output.txt
+        cd ${{ inputs.path }}; \
+        cdk diff --no-change-set --quiet --no-color > output.txt 2>&1; \
+        awk '/Resources/{flag=1; print; next} /Number of stacks/{flag=0} flag' output.txt > resources_output.txt; \
         if [ -s diff.txt ]; then
           gh pr comment ${{ github.event.number }} --body "$(printf '### Changes Summary ✨\n' "$(cat resources_output.txt)")"
           exit 0
