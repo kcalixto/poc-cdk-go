@@ -172,36 +172,6 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 		&awsapigateway.MethodOptions{},
 	)
 
-	// anther lambda
-	sqsProducer2FunctionName := name("producer-2-function")
-	sqsProducer2Function := awslambda.NewFunction(stack, sqsProducer2FunctionName, &awslambda.FunctionProps{
-		FunctionName: sqsProducer2FunctionName,
-		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
-		Architecture: awslambda.Architecture_ARM_64(),
-		Handler:      jsii.String("bootstrap"),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		MemorySize:   jsii.Number(256),
-		Code: awslambda.Code_FromAsset(
-			bin("producer.zip"),
-			nil,
-		),
-		Environment: &map[string]*string{
-			"TEST": getSSM("/poc-cdk-go/test"),
-		},
-	})
-
-	producer2Resource := api.Root().ResourceForPath(jsii.String("/produce/message2"))
-	producer2Resource.AddMethod(
-		jsii.String(http.MethodPost),
-		awsapigateway.NewLambdaIntegration(
-			sqsProducer2Function,
-			&awsapigateway.LambdaIntegrationOptions{
-				AllowTestInvoke: jsii.Bool(false),
-			},
-		),
-		&awsapigateway.MethodOptions{},
-	)
-
 	return stack
 }
 
