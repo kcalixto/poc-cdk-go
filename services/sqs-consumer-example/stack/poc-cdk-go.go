@@ -206,7 +206,7 @@ func NewPocCdkGoStack(scope constructs.Construct, id string, props *PocCdkGoStac
 }
 
 func getSSM(key string) *string {
-	awsconfig, err := config.LoadDefaultConfig(context.TODO())
+	awsconfig, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("sa-east-1"))
 	if err != nil {
 		panic(err)
 	}
